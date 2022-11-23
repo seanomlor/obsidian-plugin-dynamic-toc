@@ -1,20 +1,36 @@
-import { CachedMetadata } from "obsidian";
-import { Heading } from "../models/heading";
-import { TableOptions } from "../types";
+import { CachedMetadata } from 'obsidian';
+import { Heading } from '../models/heading';
+import { TableOptions } from '../types';
 
 export function extractHeadings(
   fileMetaData: CachedMetadata,
   options: TableOptions
 ) {
-  if (!fileMetaData?.headings) return "";
+  if (!fileMetaData?.headings) {
+    return '';
+  }
+
   const { headings } = fileMetaData;
+
+  const ignoreRe = options.ignore
+    ? new RegExp(`(${options.ignore.split('\n').join('|')})`, 'i')
+    : null;
+
   const processableHeadings = headings.filter(
-    (h) => !!h && h.level >= options.min_depth && h.level <= options.max_depth
+    (h) =>
+      !!h &&
+      (!ignoreRe || !h.heading.match(ignoreRe)) &&
+      h.level >= options.min_depth &&
+      h.level <= options.max_depth
   );
-  if (!processableHeadings.length) return "";
+
+  if (!processableHeadings.length) {
+    return '';
+  }
 
   const headingInstances = processableHeadings.map((h) => new Heading(h));
-  if (options.style === "inline") {
+
+  if (options.style === 'inline') {
     return buildInlineMarkdownText(headingInstances, options);
   }
 
@@ -26,11 +42,20 @@ function getIndicator(
   firstLevel: number,
   options: TableOptions
 ) {
-  const defaultIndicator = (options.style === "number" && "1.") || "-";
-  if (!options.varied_style) return defaultIndicator;
-  // if the heading is at the same level as the first heading and varied_style is true, then only set the first indicator to the selected style
-  if (heading.level === firstLevel) return defaultIndicator;
-  return options.style === "number" ? "-" : "1.";
+  const defaultIndicator = options.style === 'number' ? '1.' : '-';
+
+  if (!options.varied_style) {
+    return defaultIndicator;
+  }
+
+  // if the heading is at the same level as the first heading and varied_style
+  // is true, then only set the first indicator to the selected style
+  if (heading.level === firstLevel) {
+    return defaultIndicator;
+  }
+
+  // return alternate style
+  return options.style === 'number' ? '-' : '1.';
 }
 
 /**
@@ -41,6 +66,7 @@ function getIndicator(
  */
 function buildMarkdownText(headings: Heading[], options: TableOptions): string {
   const firstHeadingDepth = headings[0].level;
+
   const list: string[] = [];
   if (options.title) {
     list.push(`${options.title}`);
@@ -60,10 +86,11 @@ function buildMarkdownText(headings: Heading[], options: TableOptions): string {
       previousIndent = numIndents.length;
     }
 
-    const indent = numIndents.fill("\t").join("");
+    const indent = numIndents.fill('\t').join('');
     list.push(`${indent}${itemIndication} ${heading.markdownHref}`);
   }
-  return list.join("\n");
+
+  return list.join('\n');
 }
 
 /**
@@ -76,11 +103,14 @@ function buildInlineMarkdownText(headings: Heading[], options: TableOptions) {
   const highestDepth = headings
     .map((h) => h.level)
     .reduce((a, b) => Math.min(a, b));
+
   // all headings at the same level as the highest depth
   const topLevelHeadings = headings.filter(
     (heading) => heading.level === highestDepth
   );
-  const delimiter = options.delimiter ? options.delimiter : "|";
+
+  const delimiter = options.delimiter ? options.delimiter : '|';
+
   return topLevelHeadings
     .map((heading) => `${heading.markdownHref}`)
     .join(` ${delimiter.trim()} `);

@@ -1,10 +1,12 @@
-node_modules
-.env
-*-error.log
-package-lock.json
-yarn.lock
-.npmrc
-dist/
-.DS_STORE
+# Don't include the compiled main.js file in the repo.
+# They should be uploaded to GitHub releases instead.
 main.js
-styles.css
+
+# Exclude sourcemaps
+*.map
+
+# npm
+node_modules
+
+# obsidian
+data.json

@@ -4,11 +4,11 @@ import {
   MarkdownRenderer,
   TFile,
   WorkspaceLeaf,
-} from "obsidian";
-import { mergeSettings } from "../utils/config";
-import { extractHeadings } from "../utils/extract-headings";
-import { DynamicTOCSettings, TableOptions } from "../types";
-import { TABLE_CLASS_NAME } from "src/constants";
+} from 'obsidian';
+import { mergeSettings } from '../utils/config';
+import { extractHeadings } from '../utils/extract-headings';
+import { DynamicTOCSettings, TableOptions } from '../types';
+import { TABLE_CLASS_NAME } from '../constants';
 
 export class CodeBlockRenderer extends MarkdownRenderChild {
   constructor(
@@ -19,23 +19,27 @@ export class CodeBlockRenderer extends MarkdownRenderChild {
   ) {
     super(container);
   }
+
   async onload() {
     await this.render();
+
     this.registerEvent(
       this.app.metadataCache.on(
         //@ts-ignore
-        "dynamic-toc:settings",
+        'dynamic-toc:settings',
         this.onSettingsChangeHandler
       )
     );
+
     this.registerEvent(
       this.app.workspace.on(
-        "active-leaf-change",
+        'active-leaf-change',
         this.onActiveLeafChangeHandler
       )
     );
+
     this.registerEvent(
-      this.app.metadataCache.on("changed", this.onFileChangeHandler)
+      this.app.metadataCache.on('changed', this.onFileChangeHandler)
     );
   }
 
@@ -48,6 +52,7 @@ export class CodeBlockRenderer extends MarkdownRenderChild {
   onSettingsChangeHandler = (settings: DynamicTOCSettings) => {
     this.render(mergeSettings(this.config, settings));
   };
+
   onFileChangeHandler = (file: TFile) => {
     this.filePath = file.path;
     if (file.deleted) return;
@@ -57,10 +62,12 @@ export class CodeBlockRenderer extends MarkdownRenderChild {
   async render(configOverride?: TableOptions) {
     this.container.empty();
     this.container.classList.add(TABLE_CLASS_NAME);
+
     const headings = extractHeadings(
       this.app.metadataCache.getCache(this.filePath),
       configOverride || this.config
     );
+
     await MarkdownRenderer.renderMarkdown(
       headings,
       this.container,
